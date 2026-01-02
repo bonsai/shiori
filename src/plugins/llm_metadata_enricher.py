@@ -12,6 +12,10 @@ class Plugin(FilterPlugin):
         self.model = self.config.get("model", "gemini-1.5-flash")
         self.prompt = self.config.get("prompt", "Extract tags and intent.")
 
+    @property
+    def name(self) -> str:
+        return "Filter::LLM::MetadataEnricher"
+
     def execute(self, entries: Iterator[Entry]) -> Iterator[Entry]:
         """
         Receives entries, enriches their metadata, and yields them back.

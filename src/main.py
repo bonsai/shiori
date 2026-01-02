@@ -36,11 +36,7 @@ def load_plugin(plugin_config: Dict[str, Any]):
         # This logic is based on the assumption that a plugin like 'Publish::BigQuery'
         # will correspond to a file named 'plugins/big_query.py'.
         # We will create/rename this file in a later step if needed.
-        if module_filename == "bigquery": # Handle this specific case for now
-            module_filename = "bigquery"
-
         module_path = f"plugins.{module_filename}"
-
         print(f"Loading plugin: '{module_str}' from '{module_path}'")
 
         plugin_module = importlib.import_module(module_path)
@@ -75,7 +71,7 @@ def run_pipeline(config_path: str):
         elif isinstance(instance, PublishPlugin): publishers.append(instance)
 
     # --- Execute the Pipeline ---
-    print("\\n--- Starting Pipeline Execution ---")
+    print("\n--- Starting Pipeline Execution ---")
 
     # 1. Chain all subscription plugin iterators
     entry_stream: Iterator[Entry] = chain(*(sub.execute() for sub in subscriptions))
