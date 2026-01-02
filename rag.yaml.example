@@ -1,0 +1,35 @@
+# SHIORI Intelligence Pipeline - Example Configuration
+# Rename this file to rag.yaml to run the pipeline.
+
+global:
+  timezone: Asia/Tokyo
+  log_level: info
+  bq_project_id: your-gcp-project-id
+  bq_dataset: shiori_archive
+
+plugins:
+  # ----------------------------------------------------------------
+  # 1. SUBSCRIPTION: Where to get data from
+  # ----------------------------------------------------------------
+  - module: Subscription::GoogleKeep
+    config:
+      # IMPORTANT: Change this path to your Google Keep Takeout directory.
+      path: /path/to/your/google-keep-takeout
+
+  # ----------------------------------------------------------------
+  # 2. FILTER: How to process the data
+  # ----------------------------------------------------------------
+  - module: Filter::LLM::Vectorize
+    config:
+      # This will use a mock vector for now.
+      # In the future, it will use a real embedding model.
+      model: text-embedding-004
+
+  # ----------------------------------------------------------------
+  # 3. PUBLISH: Where to send the data
+  # ----------------------------------------------------------------
+  - module: Publish::BigQuery
+    config:
+      # This will print to console for now.
+      # In the future, it will send data to this BigQuery table.
+      table_id: entries_all
