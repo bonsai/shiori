@@ -1,0 +1,79 @@
+# SHIORI Intelligence Pipeline Configuration
+global:
+  timezone: Asia/Tokyo
+  log_level: info
+  bq_project_id: gen-lang-client-0315818888
+  bq_dataset: shiori_archive
+
+plugins:
+  # ----------------------------------------------------------------
+  # 1. SUBSCRIPTION (Google Workspace)
+  # ----------------------------------------------------------------
+  - module: Subscription::GoogleKeep
+    config:
+      source_type: takeout_json
+      path: /path/to/takeout/keep/
+      tags: [idea, draft]
+
+  - module: Subscription::Gmail
+    config:
+      user_id: me
+      q: "label:important OR label:work"
+      fetch_body: true
+      # スレッド単位で文脈を保持
+
+  - module: Subscription::GoogleDrive
+    config:
+      folder_id: antigravity_root
+      file_types: [pdf, md, docx]
+      use_ocr: true # Gemini Flashで画像/PDFをテキスト化
+
+  - module: Subscription::ChromeHistory
+    config:
+      db_path: /path/to/Default/History
+      exclude_domains: [google.com, local.host]
+
+  # ----------------------------------------------------------------
+  # 2. SUBSCRIPTION (SNS / Web)
+  # ----------------------------------------------------------------
+  - module: Subscription::SNSArchive
+    config:
+      platforms:
+        - name: twitter
+          path: /path/to/twitter-data/
+        - name: note
+          path: /path/to/note-export/
+
+  # ----------------------------------------------------------------
+  # 3. FILTER (The Brain / Normalization)
+  # ----------------------------------------------------------------
+  - module: Filter::LLM::Vectorize
+    config:
+      model: text-embedding-004
+      # 全てのEntryをベクトル化して意味的な位置付けを付与
+
+  - module: Filter::LLM::MetadataEnricher
+    config:
+      model: gemini-1.5-flash
+      prompt: "Extract tags (arch, craft, cactus, law, business) and intent from content."
+
+  # ----------------------------------------------------------------
+  # 4. PUBLISH (The Lake)
+  # ----------------------------------------------------------------
+  - module: Publish::BigQuery
+    config:
+      table_id: entries_all
+      write_disposition: WRITE_APPEND
+      schema:
+        id: STRING
+        timestamp: TIMESTAMP
+        source: STRING
+        content: STRING
+        vector: FLOAT64
+        metadata: JSON
+
+  - module: Publish::Gmail
+    config:
+      mailto: your-shiori-address@gmail.com
+      subject_prefix: "[SHIORI-SYNC] "
+      condition: "entry.level == 'alert' OR entry.has_tag('law')"
