@@ -15,7 +15,8 @@ from plugins.base import Entry, SubscriptionPlugin, FilterPlugin, PublishPlugin
 
 def to_snake_case(name: str) -> str:
     """Converts a CamelCase name to snake_case."""
-    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    # More specific regex to avoid adding underscore where not needed (e.g., after another underscore)
+    name = re.sub('([a-zA-Z0-9])([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
 
 def load_plugin(plugin_config: Dict[str, Any]):
@@ -27,8 +28,8 @@ def load_plugin(plugin_config: Dict[str, Any]):
     try:
         # Get the part of the name after the first '::' (e.g., "GoogleKeep", "LLM::Vectorize")
         name_part = module_str.split("::", 1)[1]
-        # Replace any other '::' with '_' (e.g., "LLM_Vectorize")
-        module_identifier = name_part.replace("::", "_")
+        # Handle names with multiple '::' like 'LLM::Vectorize'
+        module_identifier = "_".join(name_part.split("::"))
         # Convert the identifier to snake_case for the filename (e.g., "llm_vectorize")
         module_filename = to_snake_case(module_identifier)
 
